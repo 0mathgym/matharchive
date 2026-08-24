@@ -1,0 +1,1639 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Solution Hub - 고등학교 수학 아카이빙 & 손글씨 풀이 공유</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+        body {
+            font-family: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            background-color: #f8fafc;
+        }
+        .modal-backdrop {
+            background-color: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(4px);
+        }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- 서비스 브랜딩 -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="goHome()">
+                    <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md flex items-center justify-center">
+                        <i data-lucide="book-open-check" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none">Math Solution Hub</h1>
+                        <p class="text-xs text-indigo-600 font-medium mt-0.5">수학 아카이빙 &amp; 손글씨 풀이의 집단지성</p>
+                    </div>
+                </div>
+
+                <!-- 우측 제어 바 -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <button onclick="fetchDataFromCloud(true)" title="구글 시트에서 최신 데이터 수동 수신" class="p-2 text-slate-500 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition flex items-center gap-1 text-xs font-semibold">
+                        <i data-lucide="refresh-cw" id="sync-spinner" class="w-4 h-4"></i>
+                        <span class="hidden lg:inline">동기화</span>
+                    </button>
+
+                    <div class="hidden md:flex items-center space-x-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+                        <span class="text-xs font-semibold text-slate-500 px-2">시험 대비:</span>
+                        <select id="header-category-select" onchange="selectCategory(this.value)" class="bg-white text-xs font-medium text-slate-700 py-1 px-2 rounded border border-slate-300 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        </select>
+                    </div>
+
+                    <div class="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-medium">
+                        <button id="role-student-btn" onclick="requestRoleSwitch('student')" class="px-3 py-1.5 text-xs font-semibold rounded-md transition text-indigo-600 bg-white shadow-sm">
+                            학생 모드
+                        </button>
+                        <button id="role-teacher-btn" onclick="requestRoleSwitch('teacher')" class="px-3 py-1.5 text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900">
+                            교사 모드 🔒
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="md:hidden bg-slate-50 px-4 py-2 border-t border-slate-200 flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-600 flex items-center gap-1">
+                <i data-lucide="folder" class="w-3.5 h-3.5 text-indigo-600"></i> 시험 대비:
+            </span>
+            <select id="mobile-category-select" onchange="selectCategory(this.value)" class="bg-white text-xs font-medium text-slate-700 py-1 px-2 rounded border border-slate-300 focus:outline-none max-w-[200px]">
+            </select>
+        </div>
+    </header>
+
+    <div id="cloud-sync-banner" class="bg-indigo-900 text-white text-xs py-1.5 px-4 shadow-inner">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <span id="sync-status-icon" class="w-2 h-2 rounded-full bg-amber-400 inline-block animate-pulse"></span>
+                <span id="sync-status-text" class="font-medium">구글 시트 연결 상태 확인 중...</span>
+            </div>
+            <button id="gas-config-btn" onclick="openGasConfigModal()" class="hidden text-indigo-200 hover:text-white underline font-semibold text-[11px]">
+                연동 URL 설정
+            </button>
+        </div>
+    </div>
+
+    <div id="teacher-banner" class="hidden bg-amber-50 border-b border-amber-200 text-amber-800 text-xs py-2 px-4">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center space-x-2">
+                <i data-lucide="shield-check" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+                <span><strong>교사 관리자 모드:</strong> 실명 풀이 열람, 우수 풀이 Pick, 피드백 코멘트, 공개/비공개 설정 및 문항 관리</span>
+            </div>
+            <div class="flex items-center space-x-2 flex-wrap gap-1.5">
+                <button onclick="copyShareableStudentLink()" class="text-indigo-900 bg-indigo-100 hover:bg-indigo-200 px-2.5 py-1 rounded-md font-bold text-xs border border-indigo-300 flex items-center gap-1 transition">
+                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i> 전교생 공유용 링크 복사
+                </button>
+                <button onclick="exportDataBackup()" class="text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2.5 py-1 rounded-md font-bold text-xs border border-emerald-300 flex items-center gap-1 transition">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> 백업
+                </button>
+                <button onclick="triggerImportBackup()" class="text-blue-800 bg-blue-100 hover:bg-blue-200 px-2.5 py-1 rounded-md font-bold text-xs border border-blue-300 flex items-center gap-1 transition">
+                    <i data-lucide="upload" class="w-3.5 h-3.5"></i> 복구
+                </button>
+                <input type="file" id="backup-file-input" accept=".json" onchange="importDataBackup(this)" class="hidden">
+
+                <button onclick="openGasConfigModal()" class="text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-2.5 py-1 rounded-md font-bold text-xs border border-indigo-200 flex items-center gap-1 transition">
+                    <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-indigo-600"></i> 구글 시트 연동
+                </button>
+                <button onclick="openChangePasswordModal()" class="underline hover:text-amber-900 font-semibold text-xs whitespace-nowrap ml-1">
+                    비밀번호 변경
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <div class="flex items-center space-x-2 flex-wrap gap-y-1">
+                    <span id="category-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">
+                        수학Ⅱ
+                    </span>
+                    <h2 id="category-title" class="text-xl font-bold text-slate-900">2025학년도 2학기 1차 지필평가</h2>
+                    <span id="category-status-badge" class="px-2 py-0.5 text-[11px] font-bold rounded-md"></span>
+                </div>
+                <p id="category-desc" class="text-xs text-slate-500 mt-1">고등학교 수학 기출 문항별 손글씨 풀이 공유 및 질의응답 공간입니다.</p>
+            </div>
+
+            <div class="flex items-center space-x-2 flex-wrap gap-y-2">
+                <button id="toggle-cat-active-btn" onclick="toggleCurrentCategoryActive()" class="hidden px-3.5 py-2 text-xs font-semibold rounded-xl transition items-center gap-1.5 border">
+                </button>
+                <button id="add-category-btn" onclick="openAddCategoryModal()" class="hidden px-3.5 py-2 text-xs font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl transition items-center gap-1.5 border border-slate-300">
+                    <i data-lucide="folder-plus" class="w-4 h-4 text-slate-600"></i> 카테고리 추가
+                </button>
+                <button id="delete-category-btn" onclick="confirmDeleteCurrentCategory()" class="hidden px-3 py-2 text-xs font-medium bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl transition items-center gap-1 border border-rose-200">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+                <button id="add-question-btn" onclick="openAddQuestionModal()" class="hidden px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm transition items-center gap-1.5">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> 신규 수학 문항 등록
+                </button>
+            </div>
+        </div>
+
+        <!-- 문항 목록 뷰 -->
+        <div id="view-question-list" class="space-y-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div class="relative flex-grow max-w-md">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                    <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="문항 번호 또는 개념 태그 검색 (예: 15번, #평균값정리)" class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                </div>
+
+                <div class="flex items-center space-x-2">
+                    <select id="tag-filter-select" onchange="filterByTag(this.value)" class="text-xs bg-slate-50 border border-slate-200 text-slate-700 py-2 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="ALL">전체 단원/태그</option>
+                    </select>
+
+                    <select id="sort-select" onchange="changeSorting(this.value)" class="text-xs bg-slate-50 border border-slate-200 text-slate-700 py-2 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="default">기본순 (문항 순서)</option>
+                        <option value="fewest">💡 풀이가 적은 문항 우선 (도전 추천!)</option>
+                        <option value="most_solutions">🔥 풀이가 많은 문항 순</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="questions-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+
+            <div id="no-questions-msg" class="hidden text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300 p-8">
+                <i data-lucide="help-circle" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+                <h3 class="text-base font-bold text-slate-700">등록된 수학 문항이 없습니다.</h3>
+                <p class="text-xs text-slate-500 mt-1">교사 모드에서 첫 번째 기출 및 대비 문항을 등록해 보세요.</p>
+            </div>
+        </div>
+
+        <!-- 문항 상세 뷰 -->
+        <div id="view-question-detail" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <button onclick="goHome()" class="inline-flex items-center space-x-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-2 rounded-xl transition">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    <span>전체 문항 목록으로 돌아가기</span>
+                </button>
+                <button id="detail-delete-q-btn" onclick="deleteCurrentQuestion()" class="hidden text-xs font-medium text-rose-600 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 px-3 py-2 rounded-xl transition items-center gap-1">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> 이 문항 삭제
+                </button>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3 bg-slate-50/50">
+                    <div class="flex items-center space-x-3">
+                        <span id="detail-q-num" class="bg-indigo-600 text-white font-bold text-sm px-3 py-1 rounded-lg shadow-sm">
+                            15번
+                        </span>
+                        <div>
+                            <h3 id="detail-q-title" class="font-bold text-slate-900 text-base">문항 상세</h3>
+                            <div class="flex items-center space-x-2 mt-0.5">
+                                <span id="detail-q-score" class="text-xs font-semibold text-slate-500">배점: 4.7점</span>
+                                <span class="text-slate-300">•</span>
+                                <div id="detail-q-tags" class="flex flex-wrap gap-1"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-500 flex items-center gap-1">
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-500"></i> 이미지를 클릭하면 고해상도로 확대됩니다.
+                    </div>
+                </div>
+
+                <div class="p-4 sm:p-6 bg-slate-900/5 flex justify-center items-center">
+                    <div class="relative max-w-3xl w-full bg-white rounded-xl shadow-md overflow-hidden border border-slate-200 group cursor-zoom-in" onclick="openLightbox(state.currentQuestion ? state.currentQuestion.imageUrl : '')">
+                        <img id="detail-q-image" src="" alt="수학 문제 이미지" class="w-full h-auto object-contain max-h-[500px]">
+                        <div class="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                            <span class="bg-slate-900/80 text-white text-xs px-3 py-1.5 rounded-full font-medium flex items-center gap-1">
+                                <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i> 원본 고해상도 확대
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-indigo-900 text-white p-6 rounded-2xl shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="space-y-1 text-center sm:text-left">
+                    <h3 class="text-lg font-bold flex items-center justify-center sm:justify-start gap-2">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-amber-300"></i> 손글씨 풀이 갤러리
+                    </h3>
+                    <p class="text-xs text-indigo-200">다양한 아이디어와 기하적/대수적 접근법을 비교하며 메타인지를 키워보세요!</p>
+                </div>
+                <button onclick="openAddSolutionModal()" class="w-full sm:w-auto px-5 py-3 bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs rounded-xl shadow-lg transition flex items-center justify-center gap-2 transform active:scale-95">
+                    <i data-lucide="camera" class="w-4 h-4"></i> + 내 손글씨 풀이 공유하기
+                </button>
+            </div>
+
+            <div id="solutions-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+            <div id="no-solutions-msg" class="hidden text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300 p-8">
+                <i data-lucide="pen-tool" class="w-12 h-12 text-slate-300 mx-auto mb-3"></i>
+                <h4 class="text-base font-bold text-slate-700">아직 등록된 손글씨 풀이가 없습니다.</h4>
+                <p class="text-xs text-slate-500 mt-1">가장 먼저 노트를 찍어 풀이를 공유하는 영광을 차지해보세요!</p>
+                <button onclick="openAddSolutionModal()" class="mt-4 px-4 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl shadow hover:bg-indigo-700 transition">
+                    첫 번째 풀이 작성하기
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL 1: 신규 문항 등록 -->
+    <div id="modal-add-question" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-indigo-400"></i> 신규 수학 문항 등록
+                </h3>
+                <button onclick="closeAddQuestionModal()" class="text-slate-400 hover:text-white transition p-1 rounded-lg hover:bg-slate-800" title="닫기">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="handleSaveQuestion(event)" class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">문항 번호 (선택)</label>
+                        <input type="text" id="input-q-num" placeholder="예: 15번" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">배점 (선택)</label>
+                        <input type="text" id="input-q-score" placeholder="예: 4.7점" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">문항 제목 / 요약 *</label>
+                    <input type="text" id="input-q-title" required placeholder="예: 삼차함수 그래프와 사잇값 정리의 활용" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">단원/개념 태그 (쉼표로 구분)</label>
+                    <input type="text" id="input-q-tags" placeholder="예: 연속, 평균값정리, 사잇값정리" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">문제 고해상도 캡처 이미지 *</label>
+                    <input type="file" id="input-q-file" accept="image/*" required onchange="previewQuestionImage(this)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    <div id="q-img-preview-container" class="mt-2 hidden border border-slate-200 rounded-lg p-2 bg-slate-50 text-center">
+                        <img id="q-img-preview" src="" alt="미리보기" class="max-h-40 mx-auto object-contain rounded">
+                    </div>
+                </div>
+
+                <div class="pt-3 flex items-center justify-end space-x-2 border-t border-slate-100">
+                    <button type="button" onclick="closeAddQuestionModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                        취소
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+                        문항 등록하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: 손글씨 풀이 등록 -->
+    <div id="modal-add-solution" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-indigo-900 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="camera" class="w-4 h-4 text-amber-300"></i> 내 손글씨 풀이 등록
+                </h3>
+                <button onclick="closeAddSolutionModal()" class="text-slate-300 hover:text-white transition p-1 rounded-lg hover:bg-indigo-800" title="닫기">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="handleSaveSolution(event)" class="p-6 space-y-4">
+                <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-800 flex items-start gap-2">
+                    <i data-lucide="shield" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                    <div>
+                        <strong>익명 보장 안내:</strong> 제출된 풀이는 게시판에서 <b>'익명 학생'</b>으로 표시되어 친구들에게 노출됩니다. (교사는 원활한 학습 지도를 위해 시스템상 확인 가능)
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">실명 (교사 확인용) *</label>
+                        <input type="text" id="input-sol-name" required placeholder="예: 홍길동" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">학번 *</label>
+                        <input type="text" id="input-sol-stuid" required placeholder="예: 20315" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">풀이 핵심 요약 및 코멘트 *</label>
+                    <input type="text" id="input-sol-desc" required placeholder="예: 사잇값 정리 조건과 연속성을 이용하여 k값 범위를 구함" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">손글씨 노트 촬영 사진 *</label>
+                    <input type="file" id="input-sol-file" accept="image/*" required onchange="previewSolutionImage(this)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    <p class="text-[11px] text-slate-400 mt-1">※ 사진이 클라우드에 맞게 고화질 용량으로 자동 최적화됩니다.</p>
+                    <div id="sol-img-preview-container" class="mt-2 hidden border border-slate-200 rounded-lg p-2 bg-slate-50 text-center">
+                        <img id="sol-img-preview" src="" alt="미리보기" class="max-h-40 mx-auto object-contain rounded">
+                    </div>
+                </div>
+
+                <div class="pt-3 flex items-center justify-end space-x-2 border-t border-slate-100">
+                    <button type="button" onclick="closeAddSolutionModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                        취소
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+                        풀이 게시하기
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: 교사 인증 암호 모달 -->
+    <div id="modal-teacher-auth" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-amber-600 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="lock" class="w-4 h-4"></i> 교사 인증 비밀번호 입력
+                </h3>
+                <button onclick="closeTeacherAuthModal()" class="text-amber-200 hover:text-white transition p-1 rounded-lg" title="닫기">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="handleTeacherAuth(event)" class="p-6 space-y-4">
+                <p class="text-xs text-slate-600">교사 관리자 모드로 전환하려면 암호를 입력하세요.</p>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">비밀번호 *</label>
+                    <div class="relative">
+                        <input type="password" id="input-teacher-pw" required placeholder="암호 입력" class="w-full text-xs p-2.5 pr-9 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500">
+                        <button type="button" onclick="togglePasswordVisibility('input-teacher-pw', 'pw-auth-eye')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                            <i id="pw-auth-eye" data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="pt-2 flex items-center justify-end space-x-2">
+                    <button type="button" onclick="closeTeacherAuthModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                        취소
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow transition">
+                        인증 및 전환
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: 교사 비밀번호 변경 모달 -->
+    <div id="modal-change-password" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="key-round" class="w-4 h-4 text-amber-400"></i> 교사 암호 변경
+                </h3>
+                <button onclick="closeChangePasswordModal()" class="text-slate-400 hover:text-white transition p-1 rounded-lg" title="닫기">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="handleChangePassword(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">현재 비밀번호 *</label>
+                    <div class="relative">
+                        <input type="password" id="input-curr-pw" required class="w-full text-xs p-2.5 pr-9 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button type="button" onclick="togglePasswordVisibility('input-curr-pw', 'pw-curr-eye')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                            <i id="pw-curr-eye" data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">새로운 비밀번호 *</label>
+                    <div class="relative">
+                        <input type="password" id="input-new-pw" required placeholder="새 비밀번호 입력" class="w-full text-xs p-2.5 pr-9 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button type="button" onclick="togglePasswordVisibility('input-new-pw', 'pw-new-eye')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1">
+                            <i id="pw-new-eye" data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="pt-2 flex items-center justify-end space-x-2">
+                    <button type="button" onclick="closeChangePasswordModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                        취소
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+                        암호 변경
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: 카테고리 추가 모달 -->
+    <div id="modal-add-category" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-indigo-900 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="folder-plus" class="w-4 h-4 text-indigo-300"></i> 신규 시험/카테고리 생성
+                </h3>
+                <button onclick="closeAddCategoryModal()" class="text-indigo-200 hover:text-white transition p-1 rounded-lg" title="닫기">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="handleSaveCategory(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">과목 배지 명칭 *</label>
+                    <input type="text" id="input-cat-subject" required placeholder="예: 미적분, 수학Ⅱ, 확률과통계" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">시험/카테고리 이름 *</label>
+                    <input type="text" id="input-cat-title" required placeholder="예: 2026학년도 1학기 모의고사 대비 (미적분)" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">카테고리 설명</label>
+                    <input type="text" id="input-cat-desc" placeholder="예: 3월 전국연합학력평가 미적분 대비 기출 정복" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="pt-2 flex items-center justify-end space-x-2">
+                    <button type="button" onclick="closeAddCategoryModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                        취소
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+                        카테고리 생성
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 6: 교사 첨삭 피드백 모달 -->
+    <div id="modal-teacher-comment" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-amber-600 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="message-square-plus" class="w-4 h-4"></i> 교사 첨삭 피드백 작성
+                </h3>
+                <button onclick="closeTeacherCommentModal()" class="text-amber-200 hover:text-white transition p-1 rounded-lg" title="닫기">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="handleSaveTeacherComment(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">학생 풀이에 대한 교사 한 줄 피드백 *</label>
+                    <textarea id="input-teacher-comment-text" rows="3" required placeholder="예: 사잇값 정리의 구간 조건 [a,b]에서의 연속성을 명확히 제시한 훌륭한 풀이입니다!" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+                </div>
+                <div class="pt-2 flex items-center justify-end space-x-2">
+                    <button type="button" onclick="closeTeacherCommentModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                        취소
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow transition">
+                        피드백 저장
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 7: 구글 시트 연동 URL 모달 -->
+    <div id="modal-gas-config" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-indigo-900 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-indigo-300"></i> 구글 시트 클라우드 URL 설정
+                </h3>
+                <button onclick="closeGasConfigModal()" class="text-indigo-200 hover:text-white transition p-1 rounded-lg" title="닫기">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="handleSaveGasUrl(event)" class="p-6 space-y-4">
+                <p class="text-xs text-slate-600 leading-relaxed">
+                    구글 시트에 연결된 Apps Script 웹 앱 URL을 입력하세요. 이 URL이 지정되면 <b>모든 학생 기기에서 선생님이 올려둔 문제와 카테고리를 실시간으로 함께 열람</b>할 수 있게 됩니다.
+                </p>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Apps Script 웹 앱 URL *</label>
+                    <input type="url" id="input-gas-url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full text-xs p-2.5 bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div class="pt-2 flex items-center justify-end space-x-2">
+                    <button type="button" onclick="closeGasConfigModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                        취소
+                    </button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+                        연동 및 즉시 동기화
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 8: 라이트박스 고해상도 이미지 확대 모달 -->
+    <div id="modal-lightbox" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 hidden" onclick="closeLightbox()">
+        <button onclick="closeLightbox()" class="absolute top-4 right-4 text-white hover:text-slate-300 p-2 rounded-full bg-slate-800/80 transition" title="닫기">
+            <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+        <img id="lightbox-image" src="" alt="확대 이미지" class="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl" onclick="event.stopPropagation()">
+    </div>
+
+    <!-- MODAL 9: 커스텀 대화상자 -->
+    <div id="modal-custom-dialog" class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center space-y-4 border border-slate-200">
+            <div id="dialog-icon-container" class="w-12 h-12 rounded-full mx-auto flex items-center justify-center bg-indigo-100 text-indigo-600">
+                <i id="dialog-icon" data-lucide="info" class="w-6 h-6"></i>
+            </div>
+            <h3 id="dialog-title" class="font-bold text-base text-slate-900">알림</h3>
+            <p id="dialog-message" class="text-xs text-slate-600 leading-relaxed"></p>
+            <div id="dialog-buttons" class="flex justify-center space-x-2 pt-2"></div>
+        </div>
+    </div>
+
+    <script>
+        // ====== [중요] 깃허브 배포 시 아래 큰따옴표 안에 구글 앱스클립트 URL을 넣어주세요! ======
+        // 예: const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycb.../exec";
+        const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxF1EKDxRpznLdECpqZlxxuhvMNhnMcB18yO4j3gqV3SrYmYvOwwbWDxbg5NWd8DJ_JyQ/exec";
+
+        const state = {
+            role: 'student',
+            teacherPassword: 'math1234',
+            gasScriptUrl: '',
+            currentCategoryId: 'cat-1',
+            currentQuestionId: null,
+            currentQuestion: null,
+            searchQuery: '',
+            selectedTag: 'ALL',
+            sortBy: 'default',
+            isCloudConnected: false,
+            
+            categories: [
+                {
+                    id: 'cat-1',
+                    subject: '수학Ⅱ',
+                    title: '2025학년도 2학기 1차 지필평가',
+                    desc: '고등학교 수학 기출 문항별 손글씨 풀이 공유 및 질의응답 공간입니다.',
+                    isActive: true
+                },
+                {
+                    id: 'cat-2',
+                    subject: '미적분',
+                    title: '2026학년도 1학기 모의고사 대비 (미적분)',
+                    desc: '전국연합학력평가 및 수능 모의고사 4점 킬러 문항 대비 정복 챌린지',
+                    isActive: false
+                }
+            ],
+
+            mockQuestionSVG: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400' viewBox='0 0 800 400'%3E%3Crect width='800' height='400' fill='%23F8FAFC'/%3E%3Crect x='20' y='20' width='760' height='360' rx='12' fill='white' stroke='%23CBD5E1' stroke-width='2'/%3E%3Ctext x='40' y='70' font-family='sans-serif' font-size='22' font-weight='bold' fill='%231E293B'%3E%5B문제 15%5D 사잇값 정리와 단조함수의 실근%3C/text%3E%3Ctext x='40' y='120' font-family='sans-serif' font-size='16' fill='%23334155'%3E실수 전체의 집합에서 연속인 함수 f(x)가 다음 조건을 만족시킨다.%3C/text%3E%3Ctext x='60' y='160' font-family='sans-serif' font-size='15' fill='%23475569'%3E(가) -3 %E2%89%A1 x%E2%82%81 %3C x%E2%82%82 %E2%89%A1 3 이면 f(x%E2%82%81) %E2%89%A0 f(x%E2%82%82)%3C/text%3E%3Ctext x='60' y='195' font-family='sans-serif' font-size='15' fill='%23475569'%3E(나) 모든 실수 x에 대하여 f(x) + f(-x) = 2x%C2%B2 + 1 이다.%3C/text%3E%3Ctext x='40' y='250' font-family='sans-serif' font-size='16' fill='%23334155'%3Ef(3) %3E k일 때, 방정식 f(x) = 0 은 열린구간 (-3, 3)에서 적어도 하나의 실근을 갖는다.%3C/text%3E%3Ctext x='40' y='290' font-family='sans-serif' font-size='16' font-weight='bold' fill='%232563EB'%3E양수 k의 최솟값을 구하시오. %5B4.7점%5D%3C/text%3E%3C/svg%3E",
+
+            mockSolutionSVG1: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='800' viewBox='0 0 600 800'%3E%3Crect width='600' height='800' fill='%23FEFCE8'/%3E%3Crect x='15' y='15' width='570' height='770' rx='8' fill='white' stroke='%23FEF08A' stroke-width='3'/%3E%3Ctext x='40' y='60' font-family='monospace' font-size='20' font-weight='bold' fill='%231E3A8A'%3E%5B풀이%5D 사잇값 정리를 이용한 k의 최솟값 도출%3C/text%3E%3Ctext x='40' y='110' font-family='sans-serif' font-size='15' fill='%231E293B'%3E1. 조건 (가)에 의해 f(x)는 %5B-3, 3%5D에서 일대일대응인 연속함수.%3C/text%3E%3Ctext x='40' y='140' font-family='sans-serif' font-size='15' fill='%231E293B'%3E2. 조건 (나)에 x=3 대입:%3C/text%3E%3Ctext x='70' y='175' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23B45309'%3Ef(3) + f(-3) = 2(3)%C2%B2 + 1 = 19%3C/text%3E%3Ctext x='70' y='205' font-family='sans-serif' font-size='16' fill='%23B45309'%3E%E2%88%B4 f(-3) = 19 - f(3)%3C/text%3E%3Ctext x='40' y='255' font-family='sans-serif' font-size='15' fill='%231E293B'%3E3. 사잇값 정리에 의해 f(-3) %C2%B7 f(3) %3C 0 이어야 함.%3C/text%3E%3Ctext x='40' y='290' font-family='sans-serif' font-size='15' fill='%231E293B'%3Ef(3) %3E k %3E 0 일 때, f(x)가 증가함수라 가정하면:%3C/text%3E%3Ctext x='70' y='325' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23047857'%3Ef(-3) = 19 - f(3) %3C 0 %E2%9F%B9 f(3) %3E 19%3C/text%3E%3Ctext x='40' y='380' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23DC2626'%3E따라서 양수 k의 최솟값 = 19 (정답: 2번)%3C/text%3E%3C/svg%3E",
+
+            questions: [
+                {
+                    id: 'q-15',
+                    categoryId: 'cat-1',
+                    questionNumber: '15번',
+                    score: '4.7점',
+                    title: '연속함수의 성질과 사잇값 정리를 이용한 실근 판단',
+                    tags: ['연속', '사잇값정리', '단조함수'],
+                    imageUrl: ''
+                },
+                {
+                    id: 'q-16',
+                    categoryId: 'cat-1',
+                    questionNumber: '16번',
+                    score: '4.7점',
+                    title: '절댓값 기호를 포함한 분수함수의 연속성 조건',
+                    tags: ['함수의연속', '절댓값', '극한값'],
+                    imageUrl: ''
+                }
+            ],
+
+            solutions: [
+                {
+                    id: 'sol-1',
+                    questionId: 'q-15',
+                    studentName: '김수학',
+                    studentId: '20312',
+                    imageUrl: '',
+                    description: '조건 (가)의 단조성과 조건 (나)의 대칭식을 조합하여 f(-3)의 부호를 결정하고 사잇값 정리 적용',
+                    isTeacherPick: true,
+                    likes: 12,
+                    teacherComment: '사잇값 정리의 부호 변화 조건과 단조성을 매우 명확히 제시한 우수 풀이입니다!',
+                    createdAt: '2026-10-21'
+                }
+            ]
+        };
+
+        const STORAGE_KEY = 'msh_app_persisted_state_v3';
+
+        function checkUrlForGasApi() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const apiParam = urlParams.get('api');
+            if (apiParam) {
+                state.gasScriptUrl = apiParam;
+                localStorage.setItem('msh_gas_url', apiParam);
+            } else {
+                state.gasScriptUrl = localStorage.getItem('msh_gas_url') || DEFAULT_GAS_URL;
+            }
+        }
+
+        function saveStateToLocalStorage() {
+            try {
+                const payload = {
+                    categories: state.categories,
+                    questions: state.questions,
+                    solutions: state.solutions,
+                    teacherPassword: state.teacherPassword,
+                    gasScriptUrl: state.gasScriptUrl
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+            } catch (err) {
+                console.warn('로컬 스토리지 저장 오버플로우/오류:', err);
+            }
+        }
+
+        function loadStateFromLocalStorage() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const parsed = JSON.parse(savedData);
+                    if (parsed.categories && parsed.categories.length > 0) state.categories = parsed.categories;
+                    if (parsed.questions) state.questions = parsed.questions;
+                    if (parsed.solutions) state.solutions = parsed.solutions;
+                    if (parsed.teacherPassword) state.teacherPassword = parsed.teacherPassword;
+                } catch (err) {
+                    console.error('저장된 데이터 복원 오류:', err);
+                }
+            }
+        }
+
+        async function fetchDataFromCloud(showToast = false) {
+            if (!state.gasScriptUrl) {
+                updateSyncBanner(false, '구글 시트 미연동 (교사 모드에서 Apps Script URL을 설정하세요)');
+                return;
+            }
+
+            const spinner = document.getElementById('sync-spinner');
+            if (spinner) spinner.classList.add('animate-spin');
+            updateSyncBanner('loading', '구글 시트에서 최신 카테고리/문제 데이터를 동기화 중...');
+
+            try {
+                const res = await fetch(state.gasScriptUrl);
+                const json = await res.json();
+
+                if (json.result === 'success' && json.data) {
+                    if (json.data.categories && json.data.categories.length > 0) {
+                        state.categories = json.data.categories;
+                    }
+                    if (json.data.questions) {
+                        state.questions = json.data.questions;
+                    }
+                    if (json.data.solutions) {
+                        state.solutions = json.data.solutions;
+                    }
+                    if (json.data.teacherPassword) {
+                        state.teacherPassword = json.data.teacherPassword;
+                    }
+
+                    saveStateToLocalStorage();
+                    renderCategories();
+                    if (state.currentQuestionId) {
+                        renderSolutions(state.currentQuestionId);
+                    } else {
+                        renderQuestionList();
+                    }
+
+                    state.isCloudConnected = true;
+                    updateSyncBanner(true, '구글 시트 실시간 연결됨 (모든 사용자 공통 데이터 동기화 완료)');
+                    if (showToast) showAlert('동기화 완료', '구글 시트의 최신 문항, 풀이 및 설정을 불러왔습니다.');
+                } else {
+                    throw new Error(json.message || '데이터 형식 오류');
+                }
+            } catch (err) {
+                console.warn('클라우드 동기화 실패:', err);
+                state.isCloudConnected = false;
+                updateSyncBanner(false, '구글 시트 동기화 실패 (네트워크 또는 Apps Script 설정을 확인하세요)');
+            } finally {
+                if (spinner) spinner.classList.remove('animate-spin');
+            }
+        }
+
+        function syncStateToCloud() {
+            saveStateToLocalStorage();
+            if (!state.gasScriptUrl) return;
+
+            const payload = {
+                action: 'SYNC_ALL_STATE',
+                categories: state.categories,
+                questions: state.questions,
+                solutions: state.solutions,
+                teacherPassword: state.teacherPassword
+            };
+
+            try {
+                fetch(state.gasScriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.warn('Google Sheets cloud sync error:', err);
+            }
+        }
+
+        function updateSyncBanner(status, message) {
+            const icon = document.getElementById('sync-status-icon');
+            const text = document.getElementById('sync-status-text');
+
+            text.innerText = message;
+            if (status === true) {
+                icon.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block';
+            } else if (status === 'loading') {
+                icon.className = 'w-2 h-2 rounded-full bg-amber-400 inline-block animate-ping';
+            } else {
+                icon.className = 'w-2 h-2 rounded-full bg-rose-500 inline-block';
+            }
+        }
+
+        function copyShareableStudentLink() {
+            if (!state.gasScriptUrl) {
+                showAlert('연동 필요', '먼저 구글 시트 연동 URL을 설정해 주세요.');
+                return;
+            }
+            const currentBaseUrl = window.location.origin + window.location.pathname;
+            const fullShareUrl = `${currentBaseUrl}?api=${encodeURIComponent(state.gasScriptUrl)}`;
+            
+            navigator.clipboard.writeText(fullShareUrl).then(() => {
+                showAlert('공유 링크 복사 완료', '전교생 자동 연동 링크가 복사되었습니다!');
+            }).catch(() => {
+                showAlert('링크 복사 실패', fullShareUrl);
+            });
+        }
+
+        function togglePasswordVisibility(inputId, eyeIconId) {
+            const input = document.getElementById(inputId);
+            const eyeIcon = document.getElementById(eyeIconId);
+            if (!input) return;
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                if (eyeIcon) eyeIcon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+
+        function exportDataBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+                categories: state.categories,
+                questions: state.questions,
+                solutions: state.solutions,
+                teacherPassword: state.teacherPassword,
+                gasScriptUrl: state.gasScriptUrl
+            }, null, 2));
+            const downloadAnchor = document.createElement('a');
+            const fileName = `MathSolutionHub_Backup_${new Date().toISOString().slice(0,10)}.json`;
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", fileName);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showAlert('백업 파일 생성 완료', `'${fileName}' 파일로 백업되었습니다.`);
+        }
+
+        function triggerImportBackup() {
+            document.getElementById('backup-file-input').click();
+        }
+
+        function importDataBackup(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.categories && parsed.questions) {
+                        showConfirm('데이터 복구 확인', '기존 데이터를 백업 파일 데이터로 교체하시겠습니까?', () => {
+                            state.categories = parsed.categories;
+                            state.questions = parsed.questions;
+                            state.solutions = parsed.solutions || [];
+                            if (parsed.teacherPassword) state.teacherPassword = parsed.teacherPassword;
+                            if (parsed.gasScriptUrl !== undefined) state.gasScriptUrl = parsed.gasScriptUrl;
+                            
+                            syncStateToCloud();
+                            renderCategories();
+                            goHome();
+                            showAlert('복구 성공', '데이터가 성공적으로 복원되었습니다.');
+                        });
+                    } else {
+                        showAlert('복구 실패', '올바른 백업 데이터 형식이 아닙니다.');
+                    }
+                } catch (err) {
+                    showAlert('오류', '파일을 읽는 중 오류가 발생했습니다.');
+                }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        function resizeAndCompressImage(file, maxWidth = 1000, quality = 0.65) {
+            return new Promise((resolve, reject) => {
+                if (!file || !file.type.startsWith('image/')) {
+                    reject(new Error('올바른 이미지 파일이 아닙니다.'));
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(dataUrl);
+                    };
+                    img.onerror = () => reject(new Error('이미지 로드에 실패했습니다.'));
+                    img.src = e.target.result;
+                };
+                reader.onerror = () => reject(new Error('파일 읽기 오류가 발생했습니다.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        let confirmCallback = null;
+
+        function showAlert(title, message) {
+            const dialog = document.getElementById('modal-custom-dialog');
+            document.getElementById('dialog-title').innerText = title;
+            document.getElementById('dialog-message').innerText = message;
+            
+            const btnContainer = document.getElementById('dialog-buttons');
+            btnContainer.innerHTML = `
+                <button onclick="closeCustomDialog()" class="px-5 py-2 text-xs font-bold bg-indigo-600 text-white rounded-xl shadow hover:bg-indigo-700 transition">
+                    확인
+                </button>
+            `;
+            dialog.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function showConfirm(title, message, onConfirm) {
+            const dialog = document.getElementById('modal-custom-dialog');
+            document.getElementById('dialog-title').innerText = title;
+            document.getElementById('dialog-message').innerText = message;
+            confirmCallback = onConfirm;
+
+            const btnContainer = document.getElementById('dialog-buttons');
+            btnContainer.innerHTML = `
+                <button onclick="closeCustomDialog()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                    취소
+                </button>
+                <button onclick="executeConfirm()" class="px-4 py-2 text-xs font-bold bg-rose-600 text-white rounded-xl shadow hover:bg-rose-700 transition">
+                    확인 및 진행
+                </button>
+            `;
+            dialog.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeCustomDialog() {
+            document.getElementById('modal-custom-dialog').classList.add('hidden');
+            confirmCallback = null;
+        }
+
+        function executeConfirm() {
+            if (typeof confirmCallback === 'function') {
+                confirmCallback();
+            }
+            closeCustomDialog();
+        }
+
+        function renderCategories() {
+            const headerSelect = document.getElementById('header-category-select');
+            const mobileSelect = document.getElementById('mobile-category-select');
+
+            const visibleCategories = state.role === 'teacher' 
+                ? state.categories 
+                : state.categories.filter(c => c.isActive !== false);
+
+            if (state.role === 'student') {
+                const currentCatObj = state.categories.find(c => c.id === state.currentCategoryId);
+                if (!currentCatObj || !currentCatObj.isActive) {
+                    state.currentCategoryId = visibleCategories[0]?.id || '';
+                }
+            }
+
+            let optionsHtml = '';
+            visibleCategories.forEach(cat => {
+                const statusSuffix = state.role === 'teacher' ? (cat.isActive ? ' [공개]' : ' [비공개]') : '';
+                optionsHtml += `<option value="${cat.id}" ${cat.id === state.currentCategoryId ? 'selected' : ''}>[${cat.subject}] ${cat.title}${statusSuffix}</option>`;
+            });
+
+            headerSelect.innerHTML = optionsHtml;
+            mobileSelect.innerHTML = optionsHtml;
+
+            const currCat = state.categories.find(c => c.id === state.currentCategoryId) || visibleCategories[0];
+            if (currCat) {
+                document.getElementById('category-badge').innerText = currCat.subject;
+                document.getElementById('category-title').innerText = currCat.title;
+                document.getElementById('category-desc').innerText = currCat.desc || '';
+
+                const statusBadge = document.getElementById('category-status-badge');
+                const toggleBtn = document.getElementById('toggle-cat-active-btn');
+
+                if (currCat.isActive) {
+                    statusBadge.className = "px-2 py-0.5 text-[11px] font-bold rounded-md bg-emerald-100 text-emerald-800 border border-emerald-300";
+                    statusBadge.innerText = "공개 중";
+                    
+                    if (state.role === 'teacher') {
+                        toggleBtn.className = "px-3.5 py-2 text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-xl transition items-center gap-1.5 border border-amber-300 flex";
+                        toggleBtn.innerHTML = `<i data-lucide="eye-off" class="w-4 h-4"></i> 학생 비공개 전환`;
+                    } else {
+                        toggleBtn.className = "hidden";
+                    }
+                } else {
+                    statusBadge.className = "px-2 py-0.5 text-[11px] font-bold rounded-md bg-slate-200 text-slate-700 border border-slate-300";
+                    statusBadge.innerText = "비공개(숨김)";
+                    
+                    if (state.role === 'teacher') {
+                        toggleBtn.className = "px-3.5 py-2 text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl transition items-center gap-1.5 border border-emerald-300 flex";
+                        toggleBtn.innerHTML = `<i data-lucide="eye" class="w-4 h-4"></i> 학생 공개 전환`;
+                    } else {
+                        toggleBtn.className = "hidden";
+                    }
+                }
+            }
+            lucide.createIcons();
+        }
+
+        function toggleCurrentCategoryActive() {
+            if (state.role !== 'teacher') return;
+            const currCat = state.categories.find(c => c.id === state.currentCategoryId);
+            if (currCat) {
+                currCat.isActive = !currCat.isActive;
+                syncStateToCloud();
+                renderCategories();
+                showAlert(
+                    currCat.isActive ? '카테고리 공개' : '카테고리 비공개', 
+                    `'${currCat.title}' 카테고리가 학생들에게 ${currCat.isActive ? '공개' : '비공개(숨김)'} 처리되었습니다.`
+                );
+            }
+        }
+
+        function selectCategory(catId) {
+            state.currentCategoryId = catId;
+            state.currentQuestionId = null;
+            renderCategories();
+            goHome();
+        }
+
+        function openAddCategoryModal() {
+            document.getElementById('modal-add-category').classList.remove('hidden');
+        }
+
+        function closeAddCategoryModal() {
+            document.getElementById('modal-add-category').classList.add('hidden');
+        }
+
+        function handleSaveCategory(e) {
+            e.preventDefault();
+            const subject = document.getElementById('input-cat-subject').value.trim();
+            const title = document.getElementById('input-cat-title').value.trim();
+            const desc = document.getElementById('input-cat-desc').value.trim();
+
+            if (!subject || !title) return;
+
+            const newId = 'cat-' + Date.now();
+            state.categories.push({ id: newId, subject, title, desc, isActive: true });
+            state.currentCategoryId = newId;
+
+            syncStateToCloud();
+            closeAddCategoryModal();
+            renderCategories();
+            goHome();
+            showAlert('카테고리 생성 완료', `'${title}' 시험 카테고리가 등록되었습니다.`);
+            
+            document.getElementById('input-cat-subject').value = '';
+            document.getElementById('input-cat-title').value = '';
+            document.getElementById('input-cat-desc').value = '';
+        }
+
+        function confirmDeleteCurrentCategory() {
+            if (state.categories.length <= 1) {
+                showAlert('삭제 불가', '최소 하나의 시험 카테고리는 유지되어야 합니다.');
+                return;
+            }
+            const currCat = state.categories.find(c => c.id === state.currentCategoryId);
+            showConfirm('카테고리 삭제', `'${currCat.title}' 카테고리와 포함된 모든 문항을 삭제하시겠습니까?`, () => {
+                state.categories = state.categories.filter(c => c.id !== state.currentCategoryId);
+                state.questions = state.questions.filter(q => q.categoryId !== state.currentCategoryId);
+                state.currentCategoryId = state.categories[0].id;
+                syncStateToCloud();
+                renderCategories();
+                goHome();
+                showAlert('삭제 완료', '카테고리가 삭제되었습니다.');
+            });
+        }
+
+        function requestRoleSwitch(targetRole) {
+            if (targetRole === 'teacher' && state.role !== 'teacher') {
+                openTeacherAuthModal();
+            } else {
+                setRole(targetRole);
+            }
+        }
+
+        function openTeacherAuthModal() {
+            document.getElementById('input-teacher-pw').value = '';
+            document.getElementById('modal-teacher-auth').classList.remove('hidden');
+        }
+
+        function closeTeacherAuthModal() {
+            document.getElementById('modal-teacher-auth').classList.add('hidden');
+        }
+
+        function handleTeacherAuth(e) {
+            e.preventDefault();
+            const pw = document.getElementById('input-teacher-pw').value;
+            if (pw === state.teacherPassword) {
+                closeTeacherAuthModal();
+                setRole('teacher');
+                showAlert('교사 인증 성공', '교사 관리자 권한이 활성화되었습니다.');
+            } else {
+                showAlert('인증 실패', '비밀번호가 올바르지 않습니다.');
+            }
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('input-curr-pw').value = '';
+            document.getElementById('input-new-pw').value = '';
+            document.getElementById('modal-change-password').classList.remove('hidden');
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('modal-change-password').classList.add('hidden');
+        }
+
+        function handleChangePassword(e) {
+            e.preventDefault();
+            const curr = document.getElementById('input-curr-pw').value;
+            const next = document.getElementById('input-new-pw').value.trim();
+
+            if (curr !== state.teacherPassword) {
+                showAlert('오류', '현재 비밀번호가 일치하지 않습니다.');
+                return;
+            }
+            if (!next || next.length < 4) {
+                showAlert('오류', '새 비밀번호는 최소 4자리 이상이어야 합니다.');
+                return;
+            }
+
+            state.teacherPassword = next;
+            syncStateToCloud();
+            closeChangePasswordModal();
+            showAlert('비밀번호 변경 완료', '교사 관리자 암호가 성공적으로 변경되었습니다.');
+        }
+
+        function openGasConfigModal() {
+            document.getElementById('input-gas-url').value = state.gasScriptUrl;
+            document.getElementById('modal-gas-config').classList.remove('hidden');
+        }
+
+        function closeGasConfigModal() {
+            document.getElementById('modal-gas-config').classList.add('hidden');
+        }
+
+        function handleSaveGasUrl(e) {
+            e.preventDefault();
+            const url = document.getElementById('input-gas-url').value.trim();
+            state.gasScriptUrl = url;
+            localStorage.setItem('msh_gas_url', url);
+            saveStateToLocalStorage();
+            closeGasConfigModal();
+            fetchDataFromCloud(true);
+        }
+
+        function setRole(role) {
+            state.role = role;
+            const studentBtn = document.getElementById('role-student-btn');
+            const teacherBtn = document.getElementById('role-teacher-btn');
+            const teacherBanner = document.getElementById('teacher-banner');
+            const addQBtn = document.getElementById('add-question-btn');
+            const addCatBtn = document.getElementById('add-category-btn');
+            const delCatBtn = document.getElementById('delete-category-btn');
+            const toggleActiveBtn = document.getElementById('toggle-cat-active-btn');
+            const detailDelQBtn = document.getElementById('detail-delete-q-btn');
+            const gasConfigBtn = document.getElementById('gas-config-btn');
+
+            if (role === 'teacher') {
+                studentBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900";
+                teacherBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition text-amber-700 bg-amber-100 shadow-sm border border-amber-300";
+                teacherBanner.classList.remove('hidden');
+                addQBtn.classList.remove('hidden');
+                addCatBtn.classList.remove('hidden');
+                delCatBtn.classList.remove('hidden');
+                toggleActiveBtn.classList.remove('hidden');
+                detailDelQBtn.classList.remove('hidden');
+                if (gasConfigBtn) gasConfigBtn.classList.remove('hidden');
+            } else {
+                studentBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition text-indigo-600 bg-white shadow-sm";
+                teacherBtn.className = "px-3 py-1.5 text-xs font-semibold rounded-md transition text-slate-600 hover:text-slate-900";
+                teacherBanner.classList.add('hidden');
+                addQBtn.classList.add('hidden');
+                addCatBtn.classList.add('hidden');
+                delCatBtn.classList.add('hidden');
+                toggleActiveBtn.classList.add('hidden');
+                detailDelQBtn.classList.add('hidden');
+                if (gasConfigBtn) gasConfigBtn.classList.add('hidden');
+            }
+
+            renderCategories();
+
+            if (state.currentQuestionId) {
+                openQuestionDetail(state.currentQuestionId);
+            } else {
+                renderQuestionList();
+            }
+            lucide.createIcons();
+        }
+
+        function renderQuestionList() {
+            const grid = document.getElementById('questions-grid');
+            const emptyMsg = document.getElementById('no-questions-msg');
+            const tagSelect = document.getElementById('tag-filter-select');
+
+            let list = state.questions.filter(q => q.categoryId === state.currentCategoryId);
+
+            const tagsSet = new Set();
+            list.forEach(q => q.tags.forEach(t => tagsSet.add(t)));
+            let tagOptions = '<option value="ALL">전체 단원/태그</option>';
+            tagsSet.forEach(t => {
+                tagOptions += `<option value="${t}" ${state.selectedTag === t ? 'selected' : ''}>#${t}</option>`;
+            });
+            tagSelect.innerHTML = tagOptions;
+
+            if (state.searchQuery) {
+                const qTerm = state.searchQuery.toLowerCase();
+                list = list.filter(q => 
+                    q.questionNumber.toLowerCase().includes(qTerm) ||
+                    q.title.toLowerCase().includes(qTerm) ||
+                    q.tags.some(t => t.toLowerCase().includes(qTerm))
+                );
+            }
+
+            if (state.selectedTag !== 'ALL') {
+                list = list.filter(q => q.tags.includes(state.selectedTag));
+            }
+
+            if (state.sortBy === 'fewest') {
+                list.sort((a, b) => {
+                    const countA = state.solutions.filter(s => s.questionId === a.id).length;
+                    const countB = state.solutions.filter(s => s.questionId === b.id).length;
+                    return countA - countB;
+                });
+            } else if (state.sortBy === 'most_solutions') {
+                list.sort((a, b) => {
+                    const countA = state.solutions.filter(s => s.questionId === a.id).length;
+                    const countB = state.solutions.filter(s => s.questionId === b.id).length;
+                    return countB - countA;
+                });
+            }
+
+            if (list.length === 0) {
+                grid.innerHTML = '';
+                emptyMsg.classList.remove('hidden');
+                return;
+            } else {
+                emptyMsg.classList.add('hidden');
+            }
+
+            grid.innerHTML = list.map(q => {
+                const solCount = state.solutions.filter(s => s.questionId === q.id).length;
+                const hasPick = state.solutions.some(s => s.questionId === q.id && s.isTeacherPick);
+                const imgSrc = q.imageUrl || state.mockQuestionSVG;
+
+                return `
+                    <div onclick="openQuestionDetail('${q.id}')" class="bg-white rounded-2xl shadow-sm hover:shadow-md border border-slate-200 overflow-hidden cursor-pointer transition transform hover:-translate-y-1 flex flex-col justify-between group">
+                        <div>
+                            <div class="relative bg-slate-100 h-40 overflow-hidden border-b border-slate-100">
+                                <img src="${imgSrc}" alt="${q.questionNumber}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+                                <div class="absolute top-3 left-3 bg-indigo-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg shadow-sm">
+                                    ${q.questionNumber}
+                                </div>
+                                <div class="absolute top-3 right-3 bg-slate-900/70 text-white text-[11px] font-semibold px-2 py-0.5 rounded-md backdrop-blur-sm">
+                                    ${q.score}
+                                </div>
+                            </div>
+
+                            <div class="p-4 space-y-2">
+                                <h4 class="font-bold text-slate-900 text-sm line-clamp-2 group-hover:text-indigo-600 transition">
+                                    ${q.title}
+                                </h4>
+                                <div class="flex flex-wrap gap-1 pt-1">
+                                    ${q.tags.map(t => `<span class="text-[10px] font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">#${t}</span>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs">
+                            <span class="font-semibold ${solCount === 0 ? 'text-amber-600 font-bold' : 'text-slate-600'} flex items-center gap-1">
+                                <i data-lucide="file-text" class="w-3.5 h-3.5"></i> 풀이 ${solCount}개
+                            </span>
+                            ${hasPick ? '<span class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-md border border-amber-200 flex items-center gap-1"><i data-lucide="award" class="w-3 h-3 text-amber-600"></i> 교사 Pick</span>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function handleSearch(val) {
+            state.searchQuery = val.trim();
+            renderQuestionList();
+        }
+
+        function filterByTag(tag) {
+            state.selectedTag = tag;
+            renderQuestionList();
+        }
+
+        function changeSorting(sortVal) {
+            state.sortBy = sortVal;
+            renderQuestionList();
+        }
+
+        function goHome() {
+            state.currentQuestionId = null;
+            state.currentQuestion = null;
+            document.getElementById('view-question-list').classList.remove('hidden');
+            document.getElementById('view-question-detail').classList.add('hidden');
+            renderQuestionList();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openQuestionDetail(questionId) {
+            state.currentQuestionId = questionId;
+            const q = state.questions.find(item => item.id === questionId);
+            if (!q) return;
+
+            state.currentQuestion = q;
+
+            document.getElementById('detail-q-num').innerText = q.questionNumber;
+            document.getElementById('detail-q-title').innerText = q.title;
+            document.getElementById('detail-q-score').innerText = `배점: ${q.score}`;
+            document.getElementById('detail-q-image').src = q.imageUrl || state.mockQuestionSVG;
+
+            document.getElementById('detail-q-tags').innerHTML = q.tags.map(t => 
+                `<span class="text-xs font-semibold bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md border border-indigo-100">#${t}</span>`
+            ).join('');
+
+            document.getElementById('view-question-list').classList.add('hidden');
+            document.getElementById('view-question-detail').classList.remove('hidden');
+
+            renderSolutions(q.id);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            lucide.createIcons();
+        }
+
+        function deleteCurrentQuestion() {
+            if (!state.currentQuestionId) return;
+            showConfirm('문항 삭제', '정말로 이 수학 문항과 연관된 모든 풀이를 삭제하시겠습니까?', () => {
+                state.questions = state.questions.filter(q => q.id !== state.currentQuestionId);
+                state.solutions = state.solutions.filter(s => s.questionId !== state.currentQuestionId);
+                syncStateToCloud();
+                goHome();
+                showAlert('삭제 완료', '문항이 완전히 삭제되었습니다.');
+            });
+        }
+
+        function renderSolutions(questionId) {
+            const grid = document.getElementById('solutions-grid');
+            const emptyMsg = document.getElementById('no-solutions-msg');
+
+            const list = state.solutions.filter(s => s.questionId === questionId);
+
+            list.sort((a, b) => {
+                if (a.isTeacherPick && !b.isTeacherPick) return -1;
+                if (!a.isTeacherPick && b.isTeacherPick) return 1;
+                return b.likes - a.likes;
+            });
+
+            if (list.length === 0) {
+                grid.innerHTML = '';
+                emptyMsg.classList.remove('hidden');
+                return;
+            } else {
+                emptyMsg.classList.add('hidden');
+            }
+
+            grid.innerHTML = list.map(sol => {
+                const isTeacher = state.role === 'teacher';
+                const displayName = isTeacher ? `${sol.studentName} (${sol.studentId})` : '익명 학생';
+                const imgSrc = sol.imageUrl || state.mockSolutionSVG1;
+
+                return `
+                    <div class="bg-white rounded-2xl shadow-sm border ${sol.isTeacherPick ? 'border-amber-400 ring-2 ring-amber-300/50' : 'border-slate-200'} overflow-hidden flex flex-col justify-between relative">
+                        ${sol.isTeacherPick ? `
+                            <div class="bg-amber-400 text-slate-900 text-[11px] font-bold px-3 py-1 flex items-center gap-1 shadow-sm">
+                                <i data-lucide="award" class="w-3.5 h-3.5"></i> Teacher's Pick - 선생님 추천 우수 풀이
+                            </div>
+                        ` : ''}
+
+                        <div class="relative bg-amber-50/50 h-64 overflow-hidden border-b border-slate-100 group cursor-zoom-in" onclick="openLightbox('${imgSrc}')">
+                            <img src="${imgSrc}" alt="손글씨 풀이" class="w-full h-full object-contain p-2 group-hover:scale-105 transition duration-300">
+                            <div class="absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                <span class="bg-slate-900/80 text-white text-xs px-3 py-1 rounded-full font-medium">손글씨 노트 크게 보기</span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 space-y-3 flex-grow flex flex-col justify-between">
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="font-bold ${isTeacher ? 'text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200' : 'text-slate-700'} flex items-center gap-1">
+                                        <i data-lucide="${isTeacher ? 'eye' : 'user-check'}" class="w-3.5 h-3.5 text-indigo-600"></i> ${displayName}
+                                    </span>
+                                    <span class="text-slate-400 text-[11px]">${sol.createdAt}</span>
+                                </div>
+                                <p class="text-xs text-slate-700 leading-relaxed font-medium bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                                    "${sol.description}"
+                                </p>
+
+                                ${sol.teacherComment ? `
+                                    <div class="bg-indigo-50 border border-indigo-200 p-2.5 rounded-xl text-xs text-indigo-900 space-y-0.5">
+                                        <div class="font-bold flex items-center gap-1 text-indigo-700">
+                                            <i data-lucide="message-square" class="w-3.5 h-3.5"></i> 선생님 한 줄 피드백:
+                                        </div>
+                                        <p class="text-[11px] leading-normal">${sol.teacherComment}</p>
+                                    </div>
+                                ` : ''}
+                            </div>
+
+                            <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                                <button onclick="toggleLike('${sol.id}')" class="flex items-center space-x-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 transition">
+                                    <i data-lucide="heart" class="w-3.5 h-3.5 fill-rose-500"></i>
+                                    <span>도움돼요 ${sol.likes}</span>
+                                </button>
+
+                                ${isTeacher ? `
+                                    <div class="flex items-center space-x-1">
+                                        <button onclick="toggleTeacherPick('${sol.id}')" class="p-1.5 rounded-lg ${sol.isTeacherPick ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} text-xs font-medium" title="우수 풀이 고정">
+                                            <i data-lucide="award" class="w-4 h-4"></i>
+                                        </button>
+                                        <button onclick="openTeacherCommentModal('${sol.id}')" class="p-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 text-xs font-medium" title="피드백 작성">
+                                            <i data-lucide="message-square-plus" class="w-4 h-4"></i>
+                                        </button>
+                                        <button onclick="deleteSolution('${sol.id}')" class="p-1.5 rounded-lg bg-rose-100 text-rose-700 hover:bg-rose-200 text-xs font-medium" title="풀이 삭제">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function toggleLike(solutionId) {
+            const sol = state.solutions.find(s => s.id === solutionId);
+            if (sol) {
+                sol.likes += 1;
+                syncStateToCloud();
+                renderSolutions(state.currentQuestionId);
+            }
+        }
+
+        function toggleTeacherPick(solutionId) {
+            const sol = state.solutions.find(s => s.id === solutionId);
+            if (sol) {
+                sol.isTeacherPick = !sol.isTeacherPick;
+                syncStateToCloud();
+                renderSolutions(state.currentQuestionId);
+            }
+        }
+
+        let currentCommentSolId = null;
+        function openTeacherCommentModal(solutionId) {
+            currentCommentSolId = solutionId;
+            const sol = state.solutions.find(s => s.id === solutionId);
+            document.getElementById('input-teacher-comment-text').value = sol?.teacherComment || '';
+            document.getElementById('modal-teacher-comment').classList.remove('hidden');
+        }
+
+        function closeTeacherCommentModal() {
+            document.getElementById('modal-teacher-comment').classList.add('hidden');
+            currentCommentSolId = null;
+        }
+
+        function handleSaveTeacherComment(e) {
+            e.preventDefault();
+            const text = document.getElementById('input-teacher-comment-text').value.trim();
+            const sol = state.solutions.find(s => s.id === currentCommentSolId);
+            if (sol) {
+                sol.teacherComment = text || null;
+                syncStateToCloud();
+                closeTeacherCommentModal();
+                renderSolutions(state.currentQuestionId);
+                showAlert('피드백 저장 완료', '선생님 피드백 코멘트가 게시되었습니다.');
+            }
+        }
+
+        function deleteSolution(solutionId) {
+            showConfirm('풀이 삭제', '해당 손글씨 풀이를 정말로 삭제하시겠습니까?', () => {
+                state.solutions = state.solutions.filter(s => s.id !== solutionId);
+                syncStateToCloud();
+                renderSolutions(state.currentQuestionId);
+                showAlert('삭제 완료', '풀이가 삭제되었습니다.');
+            });
+        }
+
+        function openAddQuestionModal() {
+            document.getElementById('q-img-preview-container').classList.add('hidden');
+            document.getElementById('modal-add-question').classList.remove('hidden');
+        }
+
+        function closeAddQuestionModal() {
+            document.getElementById('modal-add-question').classList.add('hidden');
+        }
+
+        let newQuestionCompressedImg = null;
+        async function previewQuestionImage(input) {
+            if (input.files && input.files[0]) {
+                try {
+                    newQuestionCompressedImg = await resizeAndCompressImage(input.files[0], 1000, 0.65);
+                    const preview = document.getElementById('q-img-preview');
+                    preview.src = newQuestionCompressedImg;
+                    document.getElementById('q-img-preview-container').classList.remove('hidden');
+                } catch (err) {
+                    showAlert('이미지 변환 오류', err.message);
+                }
+            }
+        }
+
+        function handleSaveQuestion(e) {
+            e.preventDefault();
+            const qNumRaw = document.getElementById('input-q-num').value.trim();
+            const qScoreRaw = document.getElementById('input-q-score').value.trim();
+            const qTitle = document.getElementById('input-q-title').value.trim();
+            const qTagsRaw = document.getElementById('input-q-tags').value.trim();
+
+            const qNum = qNumRaw || '기타문항';
+            const qScore = qScoreRaw || '자율배점';
+
+            if (!newQuestionCompressedImg) {
+                showAlert('이미지 필요', '문제 캡처 사진을 첨부해 주세요.');
+                return;
+            }
+
+            const tags = qTagsRaw ? qTagsRaw.split(',').map(t => t.trim()).filter(Boolean) : ['기출'];
+
+            const newQ = {
+                id: 'q-' + Date.now(),
+                categoryId: state.currentCategoryId,
+                questionNumber: qNum,
+                score: qScore,
+                title: qTitle,
+                tags: tags,
+                imageUrl: newQuestionCompressedImg
+            };
+
+            state.questions.unshift(newQ);
+            syncStateToCloud();
+            closeAddQuestionModal();
+            renderQuestionList();
+            showAlert('등록 완료', '신규 수학 문항이 클라우드에 성공적으로 등록되었습니다.');
+
+            document.getElementById('input-q-num').value = '';
+            document.getElementById('input-q-score').value = '';
+            document.getElementById('input-q-title').value = '';
+            document.getElementById('input-q-tags').value = '';
+            document.getElementById('input-q-file').value = '';
+            newQuestionCompressedImg = null;
+        }
+
+        function openAddSolutionModal() {
+            document.getElementById('sol-img-preview-container').classList.add('hidden');
+            document.getElementById('modal-add-solution').classList.remove('hidden');
+        }
+
+        function closeAddSolutionModal() {
+            document.getElementById('modal-add-solution').classList.add('hidden');
+        }
+
+        let newSolutionCompressedImg = null;
+        async function previewSolutionImage(input) {
+            if (input.files && input.files[0]) {
+                try {
+                    newSolutionCompressedImg = await resizeAndCompressImage(input.files[0], 1000, 0.65);
+                    const preview = document.getElementById('sol-img-preview');
+                    preview.src = newSolutionCompressedImg;
+                    document.getElementById('sol-img-preview-container').classList.remove('hidden');
+                } catch (err) {
+                    showAlert('이미지 변환 오류', err.message);
+                }
+            }
+        }
+
+        function handleSaveSolution(e) {
+            e.preventDefault();
+            const sName = document.getElementById('input-sol-name').value.trim();
+            const sId = document.getElementById('input-sol-stuid').value.trim();
+            const sDesc = document.getElementById('input-sol-desc').value.trim();
+
+            if (!newSolutionCompressedImg) {
+                showAlert('사진 필요', '손글씨 노트 촬영 사진을 첨부해 주세요.');
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+
+            const newSol = {
+                id: 'sol-' + Date.now(),
+                questionId: state.currentQuestionId,
+                studentName: sName,
+                studentId: sId,
+                imageUrl: newSolutionCompressedImg,
+                description: sDesc,
+                isTeacherPick: false,
+                likes: 0,
+                teacherComment: null,
+                createdAt: today
+            };
+
+            state.solutions.unshift(newSol);
+            syncStateToCloud();
+            closeAddSolutionModal();
+            renderSolutions(state.currentQuestionId);
+            showAlert('제출 완료', '손글씨 풀이가 익명으로 클라우드에 안전하게 제출되었습니다!');
+
+            document.getElementById('input-sol-name').value = '';
+            document.getElementById('input-sol-stuid').value = '';
+            document.getElementById('input-sol-desc').value = '';
+            document.getElementById('input-sol-file').value = '';
+            newSolutionCompressedImg = null;
+        }
+
+        function openLightbox(imgSrc) {
+            if (!imgSrc) return;
+            document.getElementById('lightbox-image').src = imgSrc;
+            document.getElementById('modal-lightbox').classList.remove('hidden');
+        }
+
+        function closeLightbox() {
+            document.getElementById('modal-lightbox').classList.add('hidden');
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAddQuestionModal();
+                closeAddSolutionModal();
+                closeTeacherAuthModal();
+                closeChangePasswordModal();
+                closeAddCategoryModal();
+                closeTeacherCommentModal();
+                closeGasConfigModal();
+                closeLightbox();
+                closeCustomDialog();
+            }
+        });
+
+        window.onload = function() {
+            checkUrlForGasApi();
+            loadStateFromLocalStorage();
+            renderCategories();
+            renderQuestionList();
+            setRole('student');
+            
+            if (state.gasScriptUrl) {
+                fetchDataFromCloud();
+            } else {
+                updateSyncBanner(false, '구글 시트 미연동 (교사 모드에서 Apps Script URL을 연동하세요)');
+            }
+        };
+    </script>
+</body>
+</html>
