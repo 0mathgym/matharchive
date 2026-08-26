@@ -565,12 +565,10 @@
 
     <script>
         // ====== [중요] 깃허브 배포 시 아래 큰따옴표 안에 구글 앱스클립트 URL을 넣어주세요! ======
-        // 예: const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxF1EKDxRpznLdECpqZlxxuhvMNhnMcB18yO4j3gqV3SrYmYvOwwbWDxbg5NWd8DJ_JyQ/exec";
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbxF1EKDxRpznLdECpqZlxxuhvMNhnMcB18yO4j3gqV3SrYmYvOwwbWDxbg5NWd8DJ_JyQ/exec";
 
         const state = {
             role: 'student',
-            teacherPassword: 'math1234',
             gasScriptUrl: '',
             currentCategoryId: 'cat-1',
             currentQuestionId: null,
@@ -587,58 +585,33 @@
                     title: '2025학년도 2학기 1차 지필평가',
                     desc: '고등학교 수학 기출 문항별 손글씨 풀이 공유 및 질의응답 공간입니다.',
                     isActive: true
-                },
-                {
-                    id: 'cat-2',
-                    subject: '미적분',
-                    title: '2026학년도 1학기 모의고사 대비 (미적분)',
-                    desc: '전국연합학력평가 및 수능 모의고사 4점 킬러 문항 대비 정복 챌린지',
-                    isActive: false
                 }
             ],
 
-            mockQuestionSVG: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400' viewBox='0 0 800 400'%3E%3Crect width='800' height='400' fill='%23F8FAFC'/%3E%3Crect x='20' y='20' width='760' height='360' rx='12' fill='white' stroke='%23CBD5E1' stroke-width='2'/%3E%3Ctext x='40' y='70' font-family='sans-serif' font-size='22' font-weight='bold' fill='%231E293B'%3E%5B문제 15%5D 사잇값 정리와 단조함수의 실근%3C/text%3E%3Ctext x='40' y='120' font-family='sans-serif' font-size='16' fill='%23334155'%3E실수 전체의 집합에서 연속인 함수 f(x)가 다음 조건을 만족시킨다.%3C/text%3E%3Ctext x='60' y='160' font-family='sans-serif' font-size='15' fill='%23475569'%3E(가) -3 %E2%89%A1 x%E2%82%81 %3C x%E2%82%82 %E2%89%A1 3 이면 f(x%E2%82%81) %E2%89%A0 f(x%E2%82%82)%3C/text%3E%3Ctext x='60' y='195' font-family='sans-serif' font-size='15' fill='%23475569'%3E(나) 모든 실수 x에 대하여 f(x) + f(-x) = 2x%C2%B2 + 1 이다.%3C/text%3E%3Ctext x='40' y='250' font-family='sans-serif' font-size='16' fill='%23334155'%3Ef(3) %3E k일 때, 방정식 f(x) = 0 은 열린구간 (-3, 3)에서 적어도 하나의 실근을 갖는다.%3C/text%3E%3Ctext x='40' y='290' font-family='sans-serif' font-size='16' font-weight='bold' fill='%232563EB'%3E양수 k의 최솟값을 구하시오. %5B4.7점%5D%3C/text%3E%3C/svg%3E",
+            mockQuestionSVG: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='400' viewBox='0 0 800 400'%3E%3Crect width='800' height='400' fill='%23F8FAFC'/%3E%3Crect x='20' y='20' width='760' height='360' rx='12' fill='white' stroke='%23CBD5E1' stroke-width='2'/%3E%3Ctext x='40' y='70' font-family='sans-serif' font-size='22' font-weight='bold' fill='%231E293B'%3E%5B문제 15%5D 사잇값 정리와 단조함수의 실근%3C/text%3E%3C/svg%3E",
+            mockSolutionSVG1: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='800' viewBox='0 0 600 800'%3E%3Crect width='600' height='800' fill='%23FEFCE8'/%3E%3Ctext x='40' y='60' font-family='monospace' font-size='20' font-weight='bold' fill='%231E3A8A'%3E%5B풀이%5D 사잇값 정리를 이용한 k의 최솟값 도출%3C/text%3E%3C/svg%3E",
 
-            mockSolutionSVG1: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='800' viewBox='0 0 600 800'%3E%3Crect width='600' height='800' fill='%23FEFCE8'/%3E%3Crect x='15' y='15' width='570' height='770' rx='8' fill='white' stroke='%23FEF08A' stroke-width='3'/%3E%3Ctext x='40' y='60' font-family='monospace' font-size='20' font-weight='bold' fill='%231E3A8A'%3E%5B풀이%5D 사잇값 정리를 이용한 k의 최솟값 도출%3C/text%3E%3Ctext x='40' y='110' font-family='sans-serif' font-size='15' fill='%231E293B'%3E1. 조건 (가)에 의해 f(x)는 %5B-3, 3%5D에서 일대일대응인 연속함수.%3C/text%3E%3Ctext x='40' y='140' font-family='sans-serif' font-size='15' fill='%231E293B'%3E2. 조건 (나)에 x=3 대입:%3C/text%3E%3Ctext x='70' y='175' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23B45309'%3Ef(3) + f(-3) = 2(3)%C2%B2 + 1 = 19%3C/text%3E%3Ctext x='70' y='205' font-family='sans-serif' font-size='16' fill='%23B45309'%3E%E2%88%B4 f(-3) = 19 - f(3)%3C/text%3E%3Ctext x='40' y='255' font-family='sans-serif' font-size='15' fill='%231E293B'%3E3. 사잇값 정리에 의해 f(-3) %C2%B7 f(3) %3C 0 이어야 함.%3C/text%3E%3Ctext x='40' y='290' font-family='sans-serif' font-size='15' fill='%231E293B'%3Ef(3) %3E k %3E 0 일 때, f(x)가 증가함수라 가정하면:%3C/text%3E%3Ctext x='70' y='325' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23047857'%3Ef(-3) = 19 - f(3) %3C 0 %E2%9F%B9 f(3) %3E 19%3C/text%3E%3Ctext x='40' y='380' font-family='sans-serif' font-size='16' font-weight='bold' fill='%23DC2626'%3E따라서 양수 k의 최솟값 = 19 (정답: 2번)%3C/text%3E%3C/svg%3E",
-
-            questions: [
-                {
-                    id: 'q-15',
-                    categoryId: 'cat-1',
-                    questionNumber: '15번',
-                    score: '4.7점',
-                    title: '연속함수의 성질과 사잇값 정리를 이용한 실근 판단',
-                    tags: ['연속', '사잇값정리', '단조함수'],
-                    imageUrl: ''
-                },
-                {
-                    id: 'q-16',
-                    categoryId: 'cat-1',
-                    questionNumber: '16번',
-                    score: '4.7점',
-                    title: '절댓값 기호를 포함한 분수함수의 연속성 조건',
-                    tags: ['함수의연속', '절댓값', '극한값'],
-                    imageUrl: ''
-                }
-            ],
-
-            solutions: [
-                {
-                    id: 'sol-1',
-                    questionId: 'q-15',
-                    studentName: '김수학',
-                    studentId: '20312',
-                    imageUrl: '',
-                    description: '조건 (가)의 단조성과 조건 (나)의 대칭식을 조합하여 f(-3)의 부호를 결정하고 사잇값 정리 적용',
-                    isTeacherPick: true,
-                    likes: 12,
-                    teacherComment: '사잇값 정리의 부호 변화 조건과 단조성을 매우 명확히 제시한 우수 풀이입니다!',
-                    createdAt: '2026-10-21'
-                }
-            ]
+            questions: [],
+            solutions: []
         };
 
         const STORAGE_KEY = 'msh_app_persisted_state_v3';
+
+        function updateSyncBanner(status, text) {
+            const statusText = document.getElementById('sync-status-text');
+            const statusIcon = document.getElementById('sync-status-icon');
+            if (statusText) statusText.innerText = text;
+            if (statusIcon) {
+                statusIcon.className = "w-2 h-2 rounded-full inline-block ";
+                if (status === true) {
+                    statusIcon.className += "bg-emerald-400";
+                } else if (status === 'loading') {
+                    statusIcon.className += "bg-amber-400 animate-pulse";
+                } else {
+                    statusIcon.className += "bg-rose-400";
+                }
+            }
+        }
 
         function checkUrlForGasApi() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -657,12 +630,11 @@
                     categories: state.categories,
                     questions: state.questions,
                     solutions: state.solutions,
-                    teacherPassword: state.teacherPassword,
                     gasScriptUrl: state.gasScriptUrl
                 };
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
             } catch (err) {
-                console.warn('로컬 스토리지 저장 오버플로우/오류:', err);
+                console.warn('로컬 스토리지 저장 오류:', err);
             }
         }
 
@@ -674,7 +646,6 @@
                     if (parsed.categories && parsed.categories.length > 0) state.categories = parsed.categories;
                     if (parsed.questions) state.questions = parsed.questions;
                     if (parsed.solutions) state.solutions = parsed.solutions;
-                    if (parsed.teacherPassword) state.teacherPassword = parsed.teacherPassword;
                 } catch (err) {
                     console.error('저장된 데이터 복원 오류:', err);
                 }
@@ -689,7 +660,7 @@
 
             const spinner = document.getElementById('sync-spinner');
             if (spinner) spinner.classList.add('animate-spin');
-            updateSyncBanner('loading', '구글 시트에서 최신 카테고리/문제 데이터를 동기화 중...');
+            updateSyncBanner('loading', '구글 시트에서 최신 데이터를 동기화 중...');
 
             try {
                 const res = await fetch(state.gasScriptUrl);
@@ -705,9 +676,6 @@
                     if (json.data.solutions) {
                         state.solutions = json.data.solutions;
                     }
-                    if (json.data.teacherPassword) {
-                        state.teacherPassword = json.data.teacherPassword;
-                    }
 
                     saveStateToLocalStorage();
                     renderCategories();
@@ -718,15 +686,15 @@
                     }
 
                     state.isCloudConnected = true;
-                    updateSyncBanner(true, '구글 시트 실시간 연결됨 (모든 사용자 공통 데이터 동기화 완료)');
-                    if (showToast) showAlert('동기화 완료', '구글 시트의 최신 문항, 풀이 및 설정을 불러왔습니다.');
+                    updateSyncBanner(true, '구글 시트 실시간 연결됨');
+                    if (showToast) showAlert('동기화 완료', '최신 문항 및 풀이 데이터를 불러왔습니다.');
                 } else {
                     throw new Error(json.message || '데이터 형식 오류');
                 }
             } catch (err) {
                 console.warn('클라우드 동기화 실패:', err);
                 state.isCloudConnected = false;
-                updateSyncBanner(false, '구글 시트 동기화 실패 (네트워크 또는 Apps Script 설정을 확인하세요)');
+                updateSyncBanner(false, '구글 시트 동기화 실패 (네트워크를 확인하세요)');
             } finally {
                 if (spinner) spinner.classList.remove('animate-spin');
             }
@@ -740,8 +708,7 @@
                 action: 'SYNC_ALL_STATE',
                 categories: state.categories,
                 questions: state.questions,
-                solutions: state.solutions,
-                teacherPassword: state.teacherPassword
+                solutions: state.solutions
             };
 
             try {
@@ -756,17 +723,84 @@
             }
         }
 
-        function updateSyncBanner(status, message) {
-            const icon = document.getElementById('sync-status-icon');
-            const text = document.getElementById('sync-status-text');
+        async function handleTeacherAuth(e) {
+            e.preventDefault();
+            const pw = document.getElementById('input-teacher-pw').value;
+            
+            if (!state.gasScriptUrl) {
+                if (pw === 'math1234') {
+                    closeTeacherAuthModal();
+                    setRole('teacher');
+                    showAlert('교사 인증 성공', '교사 관리자 권한이 활성화되었습니다.');
+                } else {
+                    showAlert('인증 실패', '비밀번호가 올바르지 않습니다.');
+                }
+                return;
+            }
 
-            text.innerText = message;
-            if (status === true) {
-                icon.className = 'w-2 h-2 rounded-full bg-emerald-400 inline-block';
-            } else if (status === 'loading') {
-                icon.className = 'w-2 h-2 rounded-full bg-amber-400 inline-block animate-ping';
-            } else {
-                icon.className = 'w-2 h-2 rounded-full bg-rose-500 inline-block';
+            try {
+                const res = await fetch(state.gasScriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'VERIFY_TEACHER_PASSWORD',
+                        password: pw
+                    })
+                });
+                const json = await res.json();
+
+                if (json.result === 'success' && json.isValid) {
+                    closeTeacherAuthModal();
+                    setRole('teacher');
+                    showAlert('교사 인증 성공', '교사 관리자 권한이 활성화되었습니다.');
+                } else {
+                    showAlert('인증 실패', '비밀번호가 올바르지 않습니다.');
+                }
+            } catch (err) {
+                showAlert('오류', '인증 서버 통신에 실패했습니다.');
+            }
+        }
+
+        async function handleChangePassword(e) {
+            e.preventDefault();
+            const curr = document.getElementById('input-curr-pw').value;
+            const next = document.getElementById('input-new-pw').value.trim();
+            const confirm = document.getElementById('input-confirm-pw').value.trim();
+
+            if (!next || next.length < 4) {
+                showAlert('오류', '새 비밀번호는 최소 4자리 이상이어야 합니다.');
+                return;
+            }
+            if (next !== confirm) {
+                showAlert('오류', '새로운 비밀번호 확인 입력이 일치하지 않습니다.');
+                return;
+            }
+
+            if (!state.gasScriptUrl) {
+                showAlert('연동 필요', '먼저 구글 시트를 연동해야 비밀번호를 서버에 저장할 수 있습니다.');
+                return;
+            }
+
+            try {
+                const res = await fetch(state.gasScriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({
+                        action: 'CHANGE_TEACHER_PASSWORD',
+                        currentPassword: curr,
+                        newPassword: next
+                    })
+                });
+                const json = await res.json();
+
+                if (json.result === 'success') {
+                    closeChangePasswordModal();
+                    showAlert('비밀번호 변경 완료', '교사 암호가 구글 시트에 안전하게 변경되었습니다.');
+                } else {
+                    showAlert('변경 실패', json.message || '현재 비밀번호가 일치하지 않습니다.');
+                }
+            } catch (err) {
+                showAlert('오류', '비밀번호 변경 요청 중 오류가 발생했습니다.');
             }
         }
 
@@ -805,7 +839,6 @@
                 categories: state.categories,
                 questions: state.questions,
                 solutions: state.solutions,
-                teacherPassword: state.teacherPassword,
                 gasScriptUrl: state.gasScriptUrl
             }, null, 2));
             const downloadAnchor = document.createElement('a');
@@ -834,7 +867,6 @@
                             state.categories = parsed.categories;
                             state.questions = parsed.questions;
                             state.solutions = parsed.solutions || [];
-                            if (parsed.teacherPassword) state.teacherPassword = parsed.teacherPassword;
                             if (parsed.gasScriptUrl !== undefined) state.gasScriptUrl = parsed.gasScriptUrl;
                             
                             syncStateToCloud();
@@ -1082,18 +1114,6 @@
             document.getElementById('modal-teacher-auth').classList.add('hidden');
         }
 
-        function handleTeacherAuth(e) {
-            e.preventDefault();
-            const pw = document.getElementById('input-teacher-pw').value;
-            if (pw === state.teacherPassword) {
-                closeTeacherAuthModal();
-                setRole('teacher');
-                showAlert('교사 인증 성공', '교사 관리자 권한이 활성화되었습니다.');
-            } else {
-                showAlert('인증 실패', '비밀번호가 올바르지 않습니다.');
-            }
-        }
-
         function openChangePasswordModal() {
             document.getElementById('input-curr-pw').value = '';
             document.getElementById('input-new-pw').value = '';
@@ -1103,31 +1123,6 @@
 
         function closeChangePasswordModal() {
             document.getElementById('modal-change-password').classList.add('hidden');
-        }
-
-        function handleChangePassword(e) {
-            e.preventDefault();
-            const curr = document.getElementById('input-curr-pw').value;
-            const next = document.getElementById('input-new-pw').value.trim();
-            const confirm = document.getElementById('input-confirm-pw').value.trim();
-
-            if (curr !== state.teacherPassword) {
-                showAlert('오류', '현재 비밀번호가 일치하지 않습니다.');
-                return;
-            }
-            if (!next || next.length < 4) {
-                showAlert('오류', '새 비밀번호는 최소 4자리 이상이어야 합니다.');
-                return;
-            }
-            if (next !== confirm) {
-                showAlert('오류', '새로운 비밀번호 확인 입력이 일치하지 않습니다.');
-                return;
-            }
-
-            state.teacherPassword = next;
-            syncStateToCloud();
-            closeChangePasswordModal();
-            showAlert('비밀번호 변경 완료', '교사 관리자 암호가 성공적으로 변경되었습니다.');
         }
 
         function openGasConfigModal() {
