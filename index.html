@@ -247,6 +247,9 @@
 
     <script>
         // ====== [중요] 구글 앱스클립트 배포 URL을 아래 큰따옴표 안에 넣어주세요 ======
+        // ⚠️ 지금 이 URL은 teacher_admin_app_secret_url_fixed.html의 DEFAULT_GAS_URL과 값이 다릅니다.
+        // 하나의 구글시트/Code.gs를 교사·학생 두 화면이 공유하려면 반드시 "같은" 배포(exec) URL을
+        // 두 파일 모두에 동일하게 넣어야 합니다. 서로 다른 URL이면 서로 다른 시트를 보게 됩니다.
         const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbywlFkOFedpwlKfXb4QgCMwUFVJbUrxq88OoBJ_3ZFVhhtni0tIszvyYvCICYTGot8Paw/exec";
 
         const state = {
@@ -401,6 +404,12 @@
             document.getElementById('detail-q-num').innerText = q.questionNumber;
             document.getElementById('detail-q-title').innerText = q.title;
             document.getElementById('detail-q-image').src = q.imageUrl;
+            document.getElementById('detail-q-score').innerText = q.score ? `배점: ${q.score}점` : '배점: -';
+
+            const tagsEl = document.getElementById('detail-q-tags');
+            tagsEl.innerHTML = (q.tags || []).map(t =>
+                `<span class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">#${t}</span>`
+            ).join('');
 
             document.getElementById('view-question-list').classList.add('hidden');
             document.getElementById('view-question-detail').classList.remove('hidden');
@@ -424,8 +433,9 @@
             }
 
             grid.innerHTML = list.map(sol => `
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between">
+                <div class="bg-white rounded-2xl shadow-sm border ${sol.isTeacherPick ? 'border-amber-300 ring-2 ring-amber-200' : 'border-slate-200'} overflow-hidden flex flex-col justify-between">
                     <div class="relative bg-amber-50/50 h-64 overflow-hidden cursor-zoom-in" onclick="openLightbox('${sol.imageUrl}')">
+                        ${sol.isTeacherPick ? `<span class="absolute top-2 left-2 z-10 bg-amber-400 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow">⭐ 선생님 Pick</span>` : ''}
                         <img src="${sol.imageUrl}" alt="손글씨 풀이" class="w-full h-full object-contain p-2">
                     </div>
                     <div class="p-4 space-y-2">
@@ -481,15 +491,33 @@
 
         let newSolutionCompressedImg = null;
         function previewSolutionImage(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    newSolutionCompressedImg = e.target.result;
+            if (!input.files || !input.files[0]) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // 휴대폰 카메라로 찍은 원본 사진은 수 MB에 달해 그대로 전송하면 느리거나 실패할 수 있어
+                // 문항 이미지와 동일한 방식으로 가로 1200px, JPEG 85% 품질로 리사이즈합니다.
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const maxW = 1200;
+                    if (width > maxW) {
+                        height = Math.round((height * maxW) / width);
+                        width = maxW;
+                    }
+                    canvas.width = width;
+                    canvas.height = height;
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+                    newSolutionCompressedImg = canvas.toDataURL('image/jpeg', 0.85);
                     document.getElementById('sol-img-preview').src = newSolutionCompressedImg;
                     document.getElementById('sol-img-preview-container').classList.remove('hidden');
                 };
-                reader.readAsDataURL(input.files[0]);
-            }
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
         }
 
         async function handleSaveSolution(e) {
@@ -501,7 +529,7 @@
             if (!newSolutionCompressedImg) return;
 
             const newSol = {
-                id: 'sol-' + Date.now(),
+                id: 'sol-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
                 questionId: state.currentQuestionId,
                 studentName: sName,
                 studentId: sId,
@@ -510,16 +538,31 @@
                 createdAt: new Date().toISOString().split('T')[0]
             };
 
-            closeAddSolutionModal();
-            showAlert('제출 완료', '손글씨 풀이가 익명으로 안전하게 제출되었습니다!');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.innerText = '제출 중...'; }
 
-            await fetch(state.gasScriptUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action: 'ADD_SOLUTION', solution: newSol })
-            });
+            try {
+                const res = await fetch(state.gasScriptUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ action: 'ADD_SOLUTION', solution: newSol })
+                });
+                const json = await res.json();
+                if (json.result !== 'success') {
+                    throw new Error(json.message || '서버에서 저장을 거부했습니다.');
+                }
 
-            fetchDataFromCloud();
+                closeAddSolutionModal();
+                showAlert('제출 완료', '손글씨 풀이가 익명으로 안전하게 제출되었습니다!');
+                fetchDataFromCloud();
+            } catch (err) {
+                // 저장 확인 전에 성공 알림을 먼저 띄우면, 실제로는 실패해도 학생은 제출된 줄 알게 됩니다.
+                // 실패 시에는 모달을 닫지 않고 다시 시도할 수 있게 둡니다.
+                console.error('풀이 제출 실패:', err);
+                showAlert('제출 실패', '네트워크 상태를 확인한 뒤 다시 시도해 주세요.');
+            } finally {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerText = '풀이 게시하기'; }
+            }
         }
 
         function showAlert(title, message) {
